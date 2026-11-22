@@ -107,17 +107,28 @@ input,textarea,select{font-family:inherit}
 #cvSheet .cv-contact{font-size:11.5px;color:#333;margin-bottom:10px}
 #cvSheet h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;border-bottom:1.5px solid #222;padding-bottom:2px;margin:14px 0 6px}
 #cvSheet .cv-item{margin-bottom:9px}
-#cvSheet .cv-row{display:flex;justify-content:space-between;gap:8px}
+#cvSheet .cv-row{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#cvSheet,#cvSheet *{overflow-wrap:anywhere;min-width:0}
+#cvSheet .cv-row>span:last-child{flex-shrink:0;max-width:100%}
 #cvSheet .cv-bold{font-weight:700}
 #cvSheet .cv-it{font-style:italic;color:#333}
 #cvSheet ul{margin:4px 0 0;padding-left:17px}
 #cvSheet li{margin-bottom:2.5px}
 #cvSheet p{margin:3px 0}
+@page{size:A4;margin:16mm}
 @media print{
-  body{background:#fff!important}
-  body *{visibility:hidden}
-  #cvSheet,#cvSheet *{visibility:visible}
-  #cvSheet{position:absolute;inset:0;width:100%;padding:20px 30px;box-shadow:none}
+  html,body{background:#fff!important;color:#111!important;margin:0;padding:0}
+  body>.topbar,body>footer,body>.stepnav,body>.toast{display:none!important}
+  .wrap{max-width:none;margin:0;padding:0}
+  .wrap>*:not(#result),#result>.card:not(:last-child){display:none!important}
+  #result>.card:last-child{display:block!important;background:none;border:0;padding:0;margin:0}
+  #result>.card:last-child>*:not(.cvholder){display:none!important}
+  .cvholder{overflow:visible!important;margin:0!important;padding:0!important;border:0!important;background:white!important}
+  #cvSheet{width:100%;min-width:0;padding:0;box-shadow:none;font-size:10pt}
+  #cvSheet h1,#cvSheet h2{letter-spacing:0}
+  #cvSheet h2{break-after:avoid}
+  #cvSheet .cv-row{break-after:avoid}
+  #cvSheet li{break-inside:avoid}
 }
 /* footer */
 footer{border-top:1px solid var(--line);background:rgba(6,8,7,.9);padding:26px 16px calc(26px + env(safe-area-inset-bottom));text-align:center;margin-top:36px}
@@ -270,10 +281,10 @@ const FIELDS = {
 };
 const QUANT_TEMPLATES = [
   {v:'improve', t:'زوّدت أو حسّنت حاجة بنسبة ٪', mk:(n,w)=>`Improved ${w||'performance'} by ${n}%`},
-  {v:'users', t:'اتعاملت مع N عميل/مستخدم', mk:(n,w)=>`Served ${n}+ ${w||'clients'}`},
-  {v:'projects', t:'خلصت N مشروع', mk:(n,w)=>`Delivered ${n}+ ${w||'projects'}`},
+  {v:'users', t:'اتعاملت مع N عميل/مستخدم', mk:(n,w)=>`Served ${n} ${w||'clients'}`},
+  {v:'projects', t:'خلصت N مشروع', mk:(n,w)=>`Delivered ${n} ${w||'projects'}`},
   {v:'team', t:'قدت فريق من N شخص', mk:(n,w)=>`Led a team of ${n} ${w||'members'}`},
-  {v:'money', t:'وفّرت/كسّبت فلوس', mk:(n,w)=>`Saved EGP ${n} in ${w||'operational costs'}`},
+  {v:'money', t:'وفّرت فلوس', mk:(n,w)=>`Saved EGP ${n} in ${w||'operational costs'}`},
 ];
 const SKILL_CATS = {
   'برمجة':['HTML/CSS','JavaScript','Python','Java','C++','SQL','React','Node.js','Git','PHP','Flutter'],
@@ -295,7 +306,7 @@ let S = {
   status:'', gradYear:'',
   edu:{uni:'',uniOther:'',faculty:'',major:'',degree:'BSc',start:'',end:'',gpa:'',courses:''},
   exps:[], projs:[],
-  skills:[], customSkills:'', langs:[{lang:'English',level:'Professional'}],
+  skills:[], customSkills:'', langs:[],
   certs:[],
   job:{title:'',desc:''},
   summaryStyle:'confident',
@@ -518,8 +529,8 @@ function expCard(e,i){
 }
 function addExp(){ S.exps.push(newExp()); save(); document.getElementById('expList').innerHTML = S.exps.map((e,i)=>expCard(e,i)).join(''); }
 function rmExp(i){ S.exps.splice(i,1); save(); document.getElementById('expList').innerHTML = S.exps.map((e,i)=>expCard(e,i)).join(''); }
-function setExp(i,k,v,el){ S.exps[i][k]=v; save();
-  const grp = el.parentElement; grp.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===el));
+function setExp(i,k,v,el){ if(k==='qType' && S.exps[i][k]===v) v=''; S.exps[i][k]=v; save();
+  const grp = el.parentElement; grp.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===el && !!v));
   if(k==='qType'){ const w=document.getElementById('qwrap_'+i); if(w) w.style.display = v?'grid':'none'; }
 }
 function setExpField(i,k){ S.exps[i].field=k; S.exps[i].duties=[]; save(); document.getElementById('expList').innerHTML = S.exps.map((e,ix)=>expCard(e,ix)).join(''); }
@@ -652,6 +663,7 @@ function confirmPending(){
   pendingCert.name = document.getElementById('pc_name').value.trim();
   pendingCert.issuer = document.getElementById('pc_issuer').value.trim();
   pendingCert.date = document.getElementById('pc_date').value.trim();
+  if(!pendingCert.name){ toast('اكتب اسم الشهادة بالإنجليزي قبل اعتمادها'); return; }
   S.certs.push(pendingCert); pendingCert=null; save(); refreshCerts(); renderPending();
   toast('اتسجلت الشهادة');
 }
@@ -659,8 +671,9 @@ function discardPending(){ pendingCert=null; renderPending(); }
 async function runOCR(file){
   const prog=document.getElementById('ocrProg'), bar=prog.querySelector('i'), st=document.getElementById('ocrStatus');
   prog.style.display='block'; st.textContent='بنجهز القارئ... (أول مرة ممكن تاخد ثواني)';
+  let url;
   try{
-    const url = URL.createObjectURL(file);
+    url = URL.createObjectURL(file);
     const res = await Tesseract.recognize(url,'eng',{logger:m=>{
       if(m.status==='recognizing text'){ bar.style.width=(m.progress*100)+'%'; st.textContent='بيقرا الشهادة على جهازك... '+Math.round(m.progress*100)+'%'; }
       else st.textContent = m.status+'...';
@@ -673,22 +686,29 @@ async function runOCR(file){
   }catch(e){
     st.textContent='معرفتش أقرا الصورة دي — جرب صورة أوضح أو ضيفها يدوي.';
     prog.style.display='none';
-  }
+  }finally{ if(url) URL.revokeObjectURL(url); }
 }
 function parseCertText(text){
-  const lines = String(text||'').split(/\n/).map(s=>s.trim()).filter(s=>s.length>2);
+  text=String(text||'');
+  const lines = text.split(/\n/).map(s=>s.trim()).filter(s=>s.length>2);
   const low = text.toLowerCase();
   let issuer='';
-  for(const iss of ISSUERS){ if(low.includes(iss.toLowerCase())){ issuer=iss; break; } }
+  for(const iss of ISSUERS){ if(new RegExp('(^|[^a-z0-9])'+iss.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'([^a-z0-9]|$)').test(low)){ issuer=iss; break; } }
   let date='';
   let m = text.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2},?\s+)?\d{4}/i);
   if(m) date=m[0];
   else { m = text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/); if(m) date=m[0]; }
+  if(!date){ const y=text.match(/\b(?:19|20)\d{2}\b/); if(y) date=y[0]; }
   const skip = /verify|http|www\.|credential|awarded|presented to|this is to|this certifies|successfully completed|has completed|participated in|date issued|instructor|signature|registrar|scan the|id:|no\./i;
   const skipExact = /^\s*(certificate( of (completion|achievement|participation|attendance))?|certified|verify.*|scan.*)\s*$/i;
   let name='';
   const cand = lines.filter(l=>!skip.test(l) && !skipExact.test(l) && !(issuer && l.toLowerCase().includes(issuer.toLowerCase())) && /[A-Za-z]{3}/.test(l) && !/^\W*\d+\W*$/.test(l) && !/^\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}$/.test(l) && !/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}$/i.test(l));
+  const dateLine=/^(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4})$/i;
+  const courseHint=/course|python|sql|excel|javascript|java|data|web|accounting|finance|english|leadership|fundamentals|certification|diploma|specialization|bootcamp|essentials|introduction|professional|analytics|development|science|engineering|design|marketing|management/i;
+  const filtered=cand.filter(l=>!dateLine.test(l));
+  cand.length=0; cand.push(...filtered);
   cand.sort((a,b)=>scoreNameLine(b)-scoreNameLine(a));
+  if(cand.length && !courseHint.test(cand[0])) cand.length=0;
   if(cand.length) name = cand[0].replace(/[|_~]+/g,' ').replace(/\s{2,}/g,' ').trim().slice(0,80);
   return {name, issuer, date, source:'ocr'};
 }
@@ -696,7 +716,7 @@ function scoreNameLine(l){
   let s=0; const words=l.split(/\s+/).filter(w=>/[A-Za-z]/.test(w));
   if(words.length>=2 && words.length<=9) s+=3;
   if(/^[A-Z0-9]/.test(l)) s+=1;
-  if(/course|fundamentals|certification|certificate|diploma|specialization|bootcamp|essentials|introduction|professional|analytics|development|science|engineering|design|marketing|management/i.test(l)) s+=2;
+  if(/course|python|sql|excel|javascript|java|data|web|accounting|finance|english|leadership|fundamentals|certification|certificate|diploma|specialization|bootcamp|essentials|introduction|professional|analytics|development|science|engineering|design|marketing|management/i.test(l)) s+=6;
   if(l.length>90) s-=3;
   return s;
 }
@@ -752,44 +772,49 @@ BIND.summary = () => {
   }));
 };
 function buildSummaries(){
-  const stObj = STATUS_OPTS.find(o=>o.v===S.status);
-  const who = stObj?stObj.en:'student';
-  const major = S.edu.major||'their field';
-  const uni = S.edu.uni==='__other'?(S.edu.uniOther||'university'):(S.edu.uni||'university');
+  const who = ({student1:'undergraduate student',student3:'senior undergraduate student',fresh:'recent graduate',internship:'internship candidate',switch:'professional'})[S.status] || 'candidate';
+  const major = S.edu.major.trim();
+  const uni = (S.edu.uni==='__other'?S.edu.uniOther:S.edu.uni).trim();
   const top3 = allSkills().slice(0,3);
-  const sk = top3.length?top3.join(', '):'new technologies';
-  const tgt = S.job.title?` a ${S.job.title} role`:' a challenging role';
-  const nExp = S.exps.length, nPr = S.projs.length;
-  const hands = nExp>0 ? `with hands-on ${S.exps[0].type==='volunteer'?'volunteer':'professional'} experience` : (nPr>0?`with ${nPr}+ hands-on project${nPr>1?'s':''}`:'eager to apply academic knowledge');
-  return {
-    confident:`Driven ${who} at ${uni}, skilled in ${sk}. ${cap(hands)} and a proven ability to deliver results, seeking${tgt} to create measurable impact.`,
-    balanced:`${cap(who)} majoring in ${major} at ${uni}, ${hands}. Strong foundation in ${sk}, looking for${tgt} in a growth-oriented team.`,
-    short:`${cap(who)} skilled in ${sk}, seeking${tgt}.`
-  };
+  const identity = cap(who) + (major?' in '+major:'') + (uni?' from '+uni:'');
+  const skills = top3.length ? ' Skills include '+top3.join(', ')+'.' : '';
+  const exps = validExps(), projs = validProjs();
+  const hands = exps.length ? ' Experience includes '+[...new Set(exps.map(x=>(EXP_TYPES.find(t=>t.v===x.type)||{}).en||'work'))].join(', ').toLowerCase()+' work.' : (projs.length?' Project work includes '+projs.map(x=>x.name).slice(0,2).join(' and ')+'.':'');
+  const target = S.job.title.trim() ? ' Seeking opportunities as '+S.job.title.trim()+'.' : ' Seeking opportunities to apply and develop relevant skills.';
+  return {confident:identity+'.'+skills+hands+target, balanced:identity+'.'+hands+skills+target, short:identity+'.'+skills+target};
 }
 function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
 function allSkills(){
   const arr=[...S.skills];
   (S.customSkills||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(s=>arr.push(s));
-  return [...new Set(arr)];
+  return [...new Map(arr.map(x=>[x.trim().toLowerCase(),x.trim()])).values()].filter(Boolean);
 }
 /* ============ CV BUILDER ============ */
+function validExps(){ return S.exps.filter(x=>x.role.trim() && x.org.trim()); }
+function validProjs(){ return S.projs.filter(x=>x.name.trim()); }
+function validQuant(x){
+  const n=Number(x.qN);
+  return !!QUANT_TEMPLATES.find(q=>q.v===x.qType) && String(x.qN).trim()!=='' && Number.isFinite(n) && n>0 && n<=1e12 && (!['users','projects','team'].includes(x.qType)||Number.isInteger(n));
+}
 function buildBullets(entity){
   const F = FIELDS[entity.field] || FIELDS.cs;
-  const bullets = entity.duties.slice().sort((a,b)=>a-b).map(di=>F.duties[di][1]);
-  const tools = (entity.tools||'').trim();
-  if(tools && bullets.length){ bullets[0] += ` using ${tools}`; if(bullets.length>2) bullets[2] += ` with ${tools.split(',')[0].trim()}`; }
-  if(entity.qType && entity.qN){
+  const bullets = [...new Set(entity.duties)].slice().sort((a,b)=>a-b).filter(di=>Number.isInteger(di)&&F.duties[di]).map(di=>F.duties[di][1]);
+  if(entity.qType && validQuant(entity)){
     const q = QUANT_TEMPLATES.find(x=>x.v===entity.qType);
-    if(q) bullets.push(q.mk(entity.qN, entity.qWhat));
+    bullets.push(q.mk(String(Number(entity.qN)), (entity.qWhat||'').trim()));
   }
-  return bullets.length?bullets:[(entity.field&&F.duties[0][1])];
+  return bullets;
+}
+function cvPlainText(html){
+  const tmp=document.createElement('div'); tmp.innerHTML=html;
+  tmp.querySelectorAll('h1,h2,p,li,div').forEach(el=>el.append(document.createTextNode('\n')));
+  return tmp.textContent.replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
 }
 function buildCV(){
   const c=S.contact, e=S.edu;
   const uniName = e.uni==='__other'?esc(e.uniOther):esc(e.uni);
   const deg = DEGREES.find(d=>d.v===e.degree);
-  const degEn = deg?(deg.v==='other'?'Bachelor' : deg.v):'Bachelor';
+  const degEn = deg && deg.v!=='other' ? deg.v : '';
   const contactBits=[c.email,c.phone,c.city,c.linkedin,c.github].filter(Boolean).map(esc).join(' | ');
   let html = `<div id="cvSheet">
     <h1>${esc(c.name)}</h1>
@@ -798,28 +823,30 @@ function buildCV(){
     <p>${esc(buildSummaries()[S.summaryStyle]||buildSummaries().balanced)}</p>
     <h2>Education</h2>
     <div class="cv-item">
-      <div class="cv-row"><span class="cv-bold">${degEn} in ${esc(e.major)}</span><span>${esc(e.start)} – ${esc(e.end)}</span></div>
+      <div class="cv-row"><span class="cv-bold">${degEn?degEn+' in ':''}${esc(e.major)}</span><span>${esc(e.start)} – ${esc(e.end)}</span></div>
       <div>${esc(e.faculty)}${e.faculty&&uniName?', ':''}${uniName}</div>
       ${e.gpa?`<div>GPA: ${esc(e.gpa)}</div>`:''}
       ${e.courses?`<div><span class="cv-it">Relevant Coursework:</span> ${esc(e.courses)}</div>`:''}
     </div>`;
-  if(S.exps.length){
+  if(validExps().length){
     html += `<h2>Experience</h2>`;
-    S.exps.forEach(x=>{
+    validExps().forEach(x=>{
       const ty = EXP_TYPES.find(t=>t.v===x.type);
       html += `<div class="cv-item">
-        <div class="cv-row"><span class="cv-bold">${esc(x.role)}</span><span>${esc(x.start)} – ${esc(x.end)}</span></div>
+        <div class="cv-row"><span class="cv-bold">${esc(x.role)}</span><span>${[x.start,x.end].filter(v=>v.trim()).map(esc).join(' – ')}</span></div>
         <div class="cv-it">${esc(x.org)}${ty&&x.type!=='job' ? ' · '+ty.en : ''}</div>
-        <ul>${buildBullets(x).map(b=>`<li>${esc(b)}</li>`).join('')}</ul>
+        ${buildBullets(x).length?`<ul>${buildBullets(x).map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`:''}
+        ${x.tools.trim()?`<div>Tools: ${esc(x.tools.trim())}</div>`:''}
       </div>`;
     });
   }
-  if(S.projs.length){
+  if(validProjs().length){
     html += `<h2>Projects</h2>`;
-    S.projs.forEach(p=>{
+    validProjs().forEach(p=>{
       html += `<div class="cv-item">
         <div class="cv-row"><span class="cv-bold">${esc(p.name)}</span><span>${esc(p.year||'')}</span></div>
-        <ul>${buildBullets(p).map(b=>`<li>${esc(b)}</li>`).join('')}</ul>
+        ${buildBullets(p).length?`<ul>${buildBullets(p).map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`:''}
+        ${p.tools.trim()?`<div>Tools: ${esc(p.tools.trim())}</div>`:''}
         ${p.link?`<div style="font-size:12px">${esc(p.link)}</div>`:''}
       </div>`;
     });
@@ -839,11 +866,14 @@ function buildCV(){
 }
 
 /* ============ ATS SCORER ============ */
-function tokenize(t){ return String(t||'').toLowerCase().replace(/[^a-z0-9\s\.\+#]/g,' ').split(/\s+/).filter(w=>w.length>2 && !STOPWORDS.has(w)); }
+function tokenize(t){
+  return (String(t||'').toLowerCase().match(/\.net\b|c\+\+|c#|[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*/g)||[]).filter(w=>!STOPWORDS.has(w));
+}
 function scoreATS(cvText){
   const checks = [];
   const add = (ok,pts,fix)=>checks.push({ok,pts,fix});
-  const hasJD = tokenize(S.job.desc).length>10;
+  const jdTerms=[...new Set(tokenize(S.job.desc))];
+  const hasJD = jdTerms.length>0;
   const cvToks = new Set(tokenize(cvText));
   // contact (14)
   const cOK = S.contact.name && /\S+@\S+\.\S+/.test(S.contact.email) && S.contact.phone.replace(/\D/g,'').length>=8;
@@ -855,10 +885,10 @@ function scoreATS(cvText){
   add(S.edu.major && (S.edu.uni||S.edu.uniOther) && S.edu.start && S.edu.end,10,'كمل بيانات التعليم: الجامعة والتخصص والسنين');
   add(!!S.edu.gpa,2,'لو الـ GPA بتاعك 3.0+ اكتبه — نقطة قوة للطلبة');
   // experience / projects (18)
-  const totalBullets = S.exps.concat(S.projs).reduce((n,x)=>n+buildBullets(x).length,0);
-  add(S.exps.length>0 || S.projs.length>0,10,'ضيف خبرة أو مشروع واحد على الأقل — دي أثقل حاجة في السكور');
+  const totalBullets = validExps().concat(validProjs()).reduce((n,x)=>n+buildBullets(x).length,0);
+  add(validExps().length>0 || validProjs().length>0,10,'ضيف خبرة أو مشروع واحد على الأقل — دي أثقل حاجة في السكور');
   add(totalBullets>=4,4,'خلي عندك 4 نقاط إنجاز (bullets) على الأقل موزعة على خبراتك ومشاريعك');
-  const anyQuant = S.exps.some(x=>x.qType&&x.qN);
+  const anyQuant = validExps().some(validQuant);
   add(anyQuant,4,'ضيف رقم واحد على الأقل (٪ أو عدد عملاء أو مشاريع) — الأرقام بتحبها أنظمة الـ ATS');
   // skills (12)
   const nSk = allSkills().length;
@@ -870,15 +900,15 @@ function scoreATS(cvText){
   // JD keywords (24 or redistributed)
   let missing=[]; let kwPct=0;
   if(hasJD){
-    const jdToks=[...new Set(tokenize(S.job.desc))].filter(w=>!/^\d+$/.test(w));
+    const jdToks=jdTerms;
     const top=jdToks.slice(0,60);
     const hits=top.filter(w=>cvToks.has(w));
     missing=top.filter(w=>!cvToks.has(w)).slice(0,8);
     const ratio = top.length? hits.length/top.length : 0;
     kwPct = Math.round(ratio*100);
-    checks.push({ok:ratio>=0.5,pts:Math.round(24*Math.min(1,ratio*1.6)),fix:'ضيف كلمات مفتاحية من إعلان الوظيفة في مهاراتك ونقاطك (لو بتعرفها فعلًا)'});
+    checks.push({ok:ratio>=0.75,pts:24,earned:24*ratio,fix:'ضيف كلمات مفتاحية من إعلان الوظيفة في مهاراتك ونقاطك (لو بتعرفها فعلًا)'});
   } else {
-    add(S.projs.length>=2 || S.exps.length>=1,12,'لو مفيش وصف وظيفة: ضيف مشروعين أو خبرة عشان السكور يطلع من خانات كاملة');
+    add(validProjs().length>=2 || validExps().length>=1,12,'لو مفيش وصف وظيفة: ضيف مشروعين أو خبرة عشان السكور يطلع من خانات كاملة');
     add(totalBullets>=6,6);
     add(!!(S.edu.courses||'').trim(),6,'ضيف مواد دراسية مرتبطة بالشغلانة (Relevant Coursework)');
   }
@@ -886,24 +916,26 @@ function scoreATS(cvText){
   const words = cvText.split(/\s+/).filter(Boolean).length;
   add(words>=180 && words<=750,6, words<180?'الـ CV قصير أوي — ضيف تفاصيل أكتر في النقاط':'الـ CV طويل — قصّر عشان يفضل صفحة واحدة');
   // totals
-  let got=0, max=0; checks.forEach(ch=>{ max+=ch.pts; if(ch.ok) got+=ch.pts; });
+  let got=0, max=0; checks.forEach(ch=>{ max+=ch.pts; got+=ch.earned!==undefined?ch.earned:(ch.ok?ch.pts:0); });
   const pct = Math.round(got/max*100);
-  const lo = Math.max(30, pct-4), hi = Math.min(98, pct+3);
+  const lo = Math.max(0, pct-4), hi = Math.min(100, pct+3);
   const fixes = checks.filter(ch=>!ch.ok && ch.fix).sort((a,b)=>b.pts-a.pts).map(ch=>ch.fix).slice(0,3);
   return {lo,hi,pct,fixes,missing,hasJD,words,kwPct};
 }
 
 /* ============ ENGLISH GATE ============ */
-const AR_RE = /[\u0600-\u06FF]/;
+const AR_RE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
 function findArabicFields(){
   const out=[]; const stepIx={contact:0,edu:2,exp:3,proj:4,skills:5,certs:6,job:7};
   const chk=(val,label,step)=>{ if(AR_RE.test(String(val||''))) out.push({label,step}); };
   chk(S.contact.name,'اسمك — اكتبه بالإنجليزي','contact');
   chk(S.contact.city,'المدينة','contact');
+  ['email','phone','linkedin','github'].forEach(k=>chk(S.contact[k],'بيانات التواصل: '+k,'contact'));
+  ['start','end','gpa'].forEach(k=>chk(S.edu[k],'بيانات التعليم: '+k,'edu'));
   if(S.edu.uni==='__other') chk(S.edu.uniOther,'اسم الجامعة','edu');
   chk(S.edu.faculty,'اسم الكلية','edu'); chk(S.edu.major,'التخصص','edu'); chk(S.edu.courses,'المواد المهمة','edu');
-  S.exps.forEach((x,i)=>{ chk(x.role,'المسمى الوظيفي (خبرة '+(i+1)+')','exp'); chk(x.org,'الشركة/الجهة (خبرة '+(i+1)+')','exp'); chk(x.tools,'الأدوات (خبرة '+(i+1)+')','exp'); chk(x.qWhat,'وصف الرقم (خبرة '+(i+1)+')','exp'); chk(x.start,'تاريخ البداية (خبرة '+(i+1)+')','exp'); chk(x.end,'تاريخ النهاية (خبرة '+(i+1)+')','exp'); });
-  S.projs.forEach((p,i)=>{ chk(p.name,'اسم المشروع '+(i+1),'proj'); chk(p.tools,'أدوات المشروع '+(i+1),'proj'); chk(p.link,'لينك المشروع '+(i+1),'proj'); });
+  S.exps.forEach((x,i)=>{ chk(x.role,'المسمى الوظيفي (خبرة '+(i+1)+')','exp'); chk(x.org,'الشركة/الجهة (خبرة '+(i+1)+')','exp'); chk(x.tools,'الأدوات (خبرة '+(i+1)+')','exp'); chk(x.qN,'قيمة الرقم (خبرة '+(i+1)+')','exp'); chk(x.qWhat,'وصف الرقم (خبرة '+(i+1)+')','exp'); chk(x.start,'تاريخ البداية (خبرة '+(i+1)+')','exp'); chk(x.end,'تاريخ النهاية (خبرة '+(i+1)+')','exp'); });
+  S.projs.forEach((p,i)=>{ chk(p.name,'اسم المشروع '+(i+1),'proj'); chk(p.tools,'أدوات المشروع '+(i+1),'proj'); chk(p.link,'لينك المشروع '+(i+1),'proj'); chk(p.year,'سنة المشروع '+(i+1),'proj'); });
   chk(S.customSkills,'المهارات الإضافية','skills');
   S.certs.forEach((c,i)=>{ chk(c.name,'اسم شهادة '+(i+1),'certs'); chk(c.issuer,'جهة شهادة '+(i+1),'certs'); chk(c.date,'تاريخ شهادة '+(i+1),'certs'); });
   chk(S.job.title,'المسمى الوظيفي المستهدف','job');
@@ -938,8 +970,7 @@ function finish(){
   const bad = findArabicFields();
   if(bad.length){ showEnglishGate(bad); return; }
   const cvHtml = buildCV();
-  const tmp=document.createElement('div'); tmp.innerHTML=cvHtml;
-  const cvText=tmp.textContent;
+  const cvText=cvPlainText(cvHtml);
   const sc = scoreATS(cvText);
   document.getElementById('wizard').style.display='none';
   document.getElementById('stepnav').style.display='none';
@@ -960,7 +991,7 @@ function finish(){
         <circle cx="95" cy="95" r="80" fill="none" stroke="${gaugeColor}" stroke-width="14" stroke-linecap="round"
           stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-sc.pct/100)}" style="transition:stroke-dashoffset 1.2s ease"/>
       </svg>
-      <div class="num"><div class="rng" style="color:${gaugeColor}">${sc.lo}–${sc.hi}</div><div class="of">من 100 · الرنج بيغطي اختلاف أنظمة الـ ATS</div></div>
+      <div class="num"><div class="rng" style="color:${gaugeColor}">${sc.lo}–${sc.hi}</div><div class="of">من 100 · رنج تقريبي من التطبيق</div></div>
     </div>
     <div class="score-verdict">${verdict}</div>
     ${kwLine}
@@ -976,7 +1007,7 @@ function finish(){
   </div>`:''}
   <div class="card">
     <div class="step-title" style="font-size:17px"><i class="fa-solid fa-file-lines" style="color:var(--brand2)"></i> الـ CV بتاعك</div>
-    <p class="step-hint">قالب ATS-safe: عمود واحد، عناوين أقسام ستاندرد، من غير جداول أو صور — الأنظمة بتقراه 100%.</p>
+    <p class="step-hint">قالب ATS-safe: عمود واحد، عناوين أقسام ستاندرد، من غير جداول أو صور — مصمم لسهولة قراءة النص، والنتيجة بتختلف حسب النظام.</p>
     <div class="cvholder">${cvHtml}</div>
     <button class="btn btn-gold" style="width:100%" onclick="window.print()"><i class="fa-solid fa-file-pdf"></i> حمّل PDF / اطبع</button>
     <button class="addbtn" style="margin-top:10px" onclick="goEdit()"><i class="fa-solid fa-pen"></i> عدّل أي حاجة</button>
@@ -1002,7 +1033,7 @@ function showErr(id,bad){ const el=document.getElementById(id); if(el) el.style.
 function validateStep(){
   const id = STEPS[S.step].id; let ok=true;
   if(id==='contact'){
-    ok = showErr('e_name', !/^[A-Za-z][A-Za-z\s\.\-]{2,}$/.test(S.contact.name.trim())) && ok;
+    ok = showErr('e_name', !/^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ\s.'’\-]{1,}$/.test(S.contact.name.trim())) && ok;
     ok = showErr('e_email', !/\S+@\S+\.\S+/.test(S.contact.email)) && ok;
     ok = showErr('e_phone', S.contact.phone.replace(/\D/g,'').length<8) && ok;
   }
@@ -1016,8 +1047,17 @@ function validateStep(){
     ok = showErr('e_major_e', !S.edu.major.trim()) && ok;
     const s=parseInt(S.edu.start), e=parseInt(S.edu.end);
     ok = showErr('e_years', !(s>=2015&&s<=2030&&e>=s&&e<=2035)) && ok;
-    if(ok && !S.edu.uni){ toast('اختار جامعتك'); return false; }
+    if(ok && (!S.edu.uni || (S.edu.uni==='__other'&&!S.edu.uniOther.trim()))){ toast('اختار جامعتك واكتب اسمها لو اخترت جامعة تانية'); return false; }
   }
+  if(id==='exp'){
+    for(const x of S.exps){
+      if(!x.role.trim()||!x.org.trim()){ toast('كمّل المسمى والجهة لكل خبرة، أو امسح الكارت الفاضي'); return false; }
+      if(x.qType && !validQuant(x)){ toast('اكتب رقم موجب صحيح ومناسب للإنجاز، والعدد لازم يكون صحيح للأشخاص والمشاريع'); return false; }
+    }
+  }
+  if(id==='proj' && S.projs.some(x=>!x.name.trim())){ toast('اكتب اسم كل مشروع أو امسح الكارت الفاضي'); return false; }
+  if(id==='certs' && S.certs.some(x=>!x.name.trim())){ toast('اكتب اسم كل شهادة أو امسح الكارت الفاضي'); return false; }
+  if(id==='certs' && pendingCert){ toast('راجع الشهادة المقروءة واعتمدها أو تجاهلها الأول'); return false; }
   if(!ok){ toast('كمّل الحقول اللي بالأحمر الأول'); }
   return ok;
 }
@@ -1028,7 +1068,7 @@ function validateStep(){
     const hasData = S.contact.name || S.step>0;
     if(hasData) document.getElementById('resumeBar').style.display='flex';
   }
-  if(!S.langs.length) S.langs=[{lang:'English',level:'Professional'}];
+  // Language proficiency is entered by the user, never inferred.
 })();
 </script>
 </body>
