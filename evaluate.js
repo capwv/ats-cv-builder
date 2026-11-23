@@ -146,7 +146,7 @@ function evaluateCV(text,jdText){
       fix:'ضيف الكلمات المفتاحية الناقصة من إعلان الوظيفة في المهارات والخبرات — بس اللي بتعرفه فعلًا'});
   }else{
     const extraSecs=[sec.projects,sec.certs,sec.langs].filter(Boolean).length;
-    add('depth',extraSecs>=2,8,'ضيف أقسام زيادة زي Projects وCertifications وLanguages — بتقوّي الملف قدام النظام','warn');
+    add('depth',extraSecs>=2,8,'ضيف أقسام زيادة زي Projects و Certifications و Languages — بتقوّي الملف قدام النظام','warn');
     add('depth',bulletCount>=6,6,'خلي عندك 6 نقط إنجاز على الأقل موزعة على خبراتك ومشاريعك','warn');
     add('depth',nWords>=300&&nWords<=700,8,nWords<300?'المحتوى لسه قليل — وسّع في الخبرات والمشاريع':'المحتوى زيادة عن اللزوم — اختصر عشان يفضل مركّز','warn');
     const summWords=(()=>{ const ix=lines.findIndex(l=>SECTION_PATTERNS.summary.test(l.trim().toLowerCase())); if(ix<0) return 0; return (lines[ix+1]||'').split(/\s+/).filter(Boolean).length; })();
@@ -205,7 +205,7 @@ function renderReport(rep){
   const verdict=rep.pct>=85?'ممتاز 🔥 — الـ CV ده جاهز يتقدم':rep.pct>=70?'جامد — ظبط النقط اللي تحت وهيبقى أقوى':rep.pct>=55?'كويس — بس محتاج شغل قبل التقديم':'محتاج شغل — ابدأ بالنقط اللي تحت بالترتيب';
   const gaugeColor=rep.pct>=70?'var(--brand2)':'var(--gold)';
   const circ=2*Math.PI*80;
-  const scoreLabel=rep.hasJD?'سكور تقديري مطابق لوصف الوظيفة':'رنج تقديري لجاهزية الـ CV قدام أنظمة ATS';
+  const scoreLabel=rep.hasJD?'سكور تقديري مطابق لوصف الوظيفة':'نطاق تقديري لجاهزية الـ CV قدام أنظمة ATS';
   const kwLine=rep.hasJD?`<div style="font-size:13px;margin-top:8px;padding:9px 12px;border-radius:10px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25)">تطابق الكلمات المفتاحية مع الإعلان: <b>${rep.kwPct}%</b></div>`:'';
   const groups=[];
   const seen=new Map();
@@ -222,7 +222,7 @@ function renderReport(rep){
         <circle cx="95" cy="95" r="80" fill="none" stroke="${gaugeColor}" stroke-width="14" stroke-linecap="round"
           stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-rep.pct/100)}" style="transition:stroke-dashoffset 1.2s ease"/>
       </svg>
-      <div class="num"><div class="rng" style="color:${gaugeColor}">${rep.lo}–${rep.hi}</div><div class="of">من 100 · رنج تقريبي من التطبيق</div></div>
+      <div class="num"><div class="rng" style="color:${gaugeColor}">${rep.lo}–${rep.hi}</div><div class="of">من 100 · نطاق تقريبي من التطبيق</div></div>
     </div>
     <div class="score-verdict">${verdict}</div>
     ${kwLine}
