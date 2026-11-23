@@ -1235,7 +1235,7 @@ function finish(){
   const verdict = sc.pct>=85?'ممتاز 🔥 — الـ CV ده جاهز يتقدم':sc.pct>=70?'جامد — ظبط النقط اللي تحت وهيبقى أقوى':sc.pct>=55?'كويس — بس محتاج شوية شغل':'ضعيف لسه — ظبط الأساسيات الأول';
   const gaugeColor = sc.pct>=70?'var(--brand2)':'var(--gold)';
   const circ = 2*Math.PI*80;
-  const scoreLabel = sc.hasJD ? 'سكور تقديري مطابق لوصف الوظيفة' : 'رنج تقديري لجاهزية الـ CV (CV-readiness)';
+  const scoreLabel = sc.hasJD ? 'سكور تقديري مطابق لوصف الوظيفة' : 'نطاق تقديري لجاهزية الـ CV (CV-readiness)';
   const measures = sc.hasJD ? '' : `<div style="font-size:12px;color:var(--mut);margin-top:8px;line-height:1.9">بنقيس: بيانات التواصل · التعليم · الخبرات والمشاريع · المهارات · الشهادات · طول الـ CV المناسب</div>`;
   const kwLine = sc.hasJD ? `<div style="font-size:13px;margin-top:8px;padding:9px 12px;border-radius:10px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25)">تطابق الكلمات المفتاحية مع إعلان الوظيفة: <b style="color:${gaugeColor}" dir="ltr">${sc.kwPct}%</b></div>` : '';
   r.innerHTML = `
@@ -1248,7 +1248,7 @@ function finish(){
         <circle cx="95" cy="95" r="80" fill="none" stroke="${gaugeColor}" stroke-width="14" stroke-linecap="round"
           stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-sc.pct/100)}" style="transition:stroke-dashoffset 1.2s ease"/>
       </svg>
-      <div class="num"><div class="rng" style="color:${gaugeColor}">${sc.lo}–${sc.hi}</div><div class="of">من 100 · رنج تقريبي من التطبيق</div></div>
+      <div class="num"><div class="rng" style="color:${gaugeColor}">${sc.lo}–${sc.hi}</div><div class="of">من 100 · نطاق تقريبي من التطبيق</div></div>
     </div>
     <div class="score-verdict">${verdict}</div>
     ${kwLine}
