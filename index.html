@@ -182,6 +182,94 @@ button:focus-visible{outline:2px solid var(--brand2);outline-offset:2px}
 @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @media(prefers-reduced-motion:no-preference){.hero-logo{animation:heroFloat 5s ease-in-out infinite}}
 @media(prefers-reduced-motion:reduce){#bgfx,#cursorGlow{display:none}*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* SAMS-MIS visual language. Screen only: the ATS CV and print layout stay untouched. */
+@media screen {
+  :root {
+    --bg:#06070a; --bg2:#0a0c12; --card:#0c1019; --card2:#101522;
+    --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+    --txt:#f5f7fa; --mut:#98a1b3; --brand:#3b82f6; --brand2:#7aa7ff;
+    --gold:#38bdf8; --gold2:#a5e0ff;
+  }
+  body {
+    position:relative; isolation:isolate; -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(820px 420px at 50% -12%,rgba(59,130,246,.20),transparent 68%),radial-gradient(560px 340px at 88% 8%,rgba(139,92,246,.10),transparent 70%),radial-gradient(560px 340px at 8% 22%,rgba(56,189,248,.08),transparent 70%);
+    background-attachment:fixed;
+  }
+  body::before,body::after,html::before {
+    content:""; position:fixed; z-index:0; pointer-events:none;
+    border:1px solid rgba(59,130,246,.17); transform:rotate(30deg);
+    animation:siraShapeFloat 14s ease-in-out infinite alternate;
+  }
+  body::before { width:280px; height:280px; top:18%; left:-100px; }
+  body::after { width:390px; height:390px; top:55%; right:-130px; border-radius:50%; border-color:rgba(122,167,255,.15); animation-delay:-5s; }
+  html::before { width:110px; height:110px; top:72%; left:42%; border-color:rgba(56,189,248,.18); animation-delay:-9s; }
+  #bgfx { opacity:.45; }
+  #cursorGlow { background:radial-gradient(circle,rgba(59,130,246,.12),rgba(56,189,248,.04) 42%,transparent 66%); }
+  .topbar {
+    position:sticky; background:rgba(6,7,10,.78);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-color:var(--line);
+  }
+  .topbar-in { padding-block:12px; }
+  .brand-mark { filter:drop-shadow(0 8px 24px rgba(59,130,246,.2)); }
+  .wrap { padding-top:24px; }
+  .hero {
+    position:relative; overflow:hidden; padding:38px 24px 32px;
+    background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+    border:1px solid rgba(255,255,255,.10); border-radius:20px;
+    box-shadow:0 22px 60px -38px rgba(59,130,246,.4);
+  }
+  .hero::before { content:""; position:absolute; top:0; right:10%; left:10%; height:2px; background:linear-gradient(to left,transparent,#7aa7ff,transparent); opacity:.75; }
+  .hero-logo { filter:drop-shadow(0 18px 44px rgba(59,130,246,.28)); }
+  .hero-pill { background:rgba(59,130,246,.10); border-color:rgba(122,167,255,.32); color:#9dc0ff; font-weight:800; }
+  .hero h1 { margin-block:20px 12px; }
+  .hero h1 .g { background-image:linear-gradient(100deg,#fff 10%,#9dc0ff 55%,#5b8def); }
+  .hero p { color:#b8c0cf; }
+  .feats { gap:12px 20px; }
+  .feats i { color:var(--brand2); }
+  .cta { border-radius:12px; box-shadow:0 8px 30px rgba(59,130,246,.20); }
+  .card {
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+    border-color:rgba(255,255,255,.10); border-radius:20px;
+    box-shadow:0 18px 45px -38px rgba(59,130,246,.32); padding:24px;
+  }
+  .card:hover { border-color:rgba(122,167,255,.28); box-shadow:0 18px 45px -30px rgba(59,130,246,.20); }
+  .step-ico { color:#9dc0ff; background:rgba(59,130,246,.10); border-color:rgba(122,167,255,.28); }
+  .inp,textarea.inp,select.inp,.chip { background:#070a11; border-color:var(--line2); }
+  .inp::placeholder { color:#7b879f; }
+  .inp:focus { border-color:var(--brand); background:rgba(59,130,246,.06); box-shadow:0 0 0 4px rgba(59,130,246,.16); }
+  .inp::file-selector-button { background:rgba(59,130,246,.14); color:#a8c4ff; border:1px solid rgba(122,167,255,.24); border-radius:8px; padding:8px 12px; margin-inline-end:12px; font-family:inherit; cursor:pointer; }
+  .chip.on { color:#9dc0ff; background:rgba(59,130,246,.12); border-color:rgba(122,167,255,.55); }
+  .rcard,.fix { background:rgba(255,255,255,.025); border-color:var(--line2); }
+  .drop { background:rgba(59,130,246,.045); border-color:rgba(122,167,255,.30); }
+  .stepnav { background:rgba(6,7,10,.86); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
+  .btn-ghost { background:rgba(255,255,255,.025); }
+  .btn-primary,.btn-gold { box-shadow:0 8px 30px rgba(59,130,246,.16); }
+  .toast { background:#0a101d; }
+  footer { background:rgba(6,7,10,.72); border-color:var(--line); }
+  .social { color:#a8c4ff; background:rgba(59,130,246,.07); border-color:rgba(122,167,255,.18); }
+  .social:hover { background:rgba(59,130,246,.16); border-color:rgba(122,167,255,.45); }
+  @keyframes siraShapeFloat { to { transform:translateY(-22px) rotate(44deg); } }
+  @media(max-width:520px) {
+    .wrap { padding:16px 12px 0; }
+    .hero { padding:28px 16px 26px; }
+    .hero-logo { width:130px; }
+    .hero-pill { font-size:11px; padding:7px 10px; }
+    .hero h1 { font-size:clamp(29px,7vw,36px); }
+    .hero p { font-size:14px; }
+    .feats { font-size:12px; gap:10px 14px; }
+    .card { padding:20px 16px; }
+    .resume-bar { flex-wrap:wrap; justify-content:center; }
+    body::before { left:-180px; }
+    body::after { right:-280px; }
+    .inp::file-selector-button { padding:7px; margin-inline-end:7px; }
+  }
+  @media(prefers-reduced-motion:reduce) {
+    body::before,body::after,html::before { animation:none; }
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1407,4 +1495,4 @@ function clearImportedSource(){
 })();
 </script>
 </body>
-    </html>
+  </html>
