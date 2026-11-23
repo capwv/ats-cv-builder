@@ -360,6 +360,7 @@ button:focus-visible{outline:2px solid var(--brand2);outline-offset:2px}
   <div class="family">من أسرة <b>Infinity University Activity</b> · جرب كمان <a href="https://infinity-team-1-iua.github.io/IUA-SAMS/" target="_blank" rel="noopener">منصة SAMS للملخصات والامتحانات</a></div>
 </footer>
 
+<script src="majors.js"></script>
 <script>
 /* ============ DATA ============ */
 const STATUS_OPTS = [
@@ -374,7 +375,7 @@ const DEGREES = [
   {v:'BCom', t:'تجارة / B.Com'}, {v:'BEng', t:'هندسة / B.Sc. Engineering'},
   {v:'BBA', t:'إدارة أعمال / BBA'}, {v:'other', t:'حاجة تانية'},
 ];
-const UNIS = ['Assiut University','Cairo University','Ain Shams University','Alexandria University','Helwan University','Mansoura University','AUC','GUC','BUE','MSA University','October 6 University','MUST','Deraya University','Sphinx University'];
+const UNIS = ['Sadat Academy for Management Sciences',const UNIS = ['Assiut University','Cairo University','Ain Shams University','Alexandria University','Helwan University','Mansoura University','AUC','GUC','BUE','MSA University','October 6 University','MUST','Deraya University','Sphinx University'];
 const JOB_TITLES = ['Software Developer','Frontend Developer','Backend Developer','Data Analyst','Data Scientist','Digital Marketing Specialist','Social Media Specialist','UI/UX Designer','Graphic Designer','Business Analyst','Accountant','HR Specialist','Customer Service Representative','Sales Representative','Content Writer','Project Coordinator'];
 const EXP_TYPES = [
   {v:'internship', t:'إنترنشيب', en:'Internship'},
@@ -621,6 +622,8 @@ RENDER.edu = () => `
   <label class="lbl" for="e_fac">الكلية / المعهد *</label>
   <input id="e_fac" class="inp en" placeholder="e.g. Faculty of Computers and Information" value="${esc(S.edu.faculty)}">
   <div class="err" id="e_fac_e">اكتب اسم الكلية بالإنجليزي</div>
+  <div class="lbl">اختار تخصصك <small>(أكاديمية السادات، أو اكتبه تحت)</small></div>
+  <div class="chips" id="majChips"></div>
   <label class="lbl" for="e_major">التخصص *</label>
   <input id="e_major" class="inp en" placeholder="e.g. Management Information Systems" value="${esc(S.edu.major)}">
   <div class="err" id="e_major_e">اكتب التخصص بالإنجليزي</div>
@@ -654,6 +657,7 @@ BIND.edu = () => {
     S.edu.degree=ch.dataset.v; save();
     document.querySelectorAll('#degChips .chip').forEach(c=>c.classList.toggle('on',c===ch));
   }));
+  if(window.samsMajorChips) samsMajorChips('e_major');
   bindInp('e_unio',S.edu,'uniOther'); bindInp('e_fac',S.edu,'faculty'); bindInp('e_major',S.edu,'major');
   bindInp('e_start',S.edu,'start'); bindInp('e_end',S.edu,'end'); bindInp('e_gpa',S.edu,'gpa'); bindInp('e_courses',S.edu,'courses');
 };
