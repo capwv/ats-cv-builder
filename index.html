@@ -1501,5 +1501,9 @@ function clearImportedSource(){
   }catch(e){}
 })();
 </script>
+<script>
+(()=>{const o=window.renderStep;window.renderStep=function(){o.apply(this,arguments);const b=document.getElementById('stepBody');let j=document.getElementById('stepJump');if(!j){j=document.createElement('div');j.id='stepJump';j.style.cssText='display:flex;gap:6px;overflow-x:auto;padding:8px 0;margin-bottom:6px';b.parentNode.insertBefore(j,b)}
+j.innerHTML=STEPS.map((s,k)=>'<button type="button" class="btn btn-ghost" title="'+s.name+'" style="padding:6px 12px;flex:none;'+(k==S.step?'outline:2px solid #3b82f6':'')+'" onclick="S.step='+k+';save();renderStep();scrollTo({top:0})">'+(k+1)+'</button>').join('');document.getElementById('btnBack').style.visibility='visible'}})();
+</script>
 </body>
   </html>
