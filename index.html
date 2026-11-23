@@ -217,6 +217,15 @@ button:focus-visible{outline:2px solid var(--brand2);outline-offset:2px}
     </div>
   </section>
 
+  <section id="cvImport" class="card" style="margin-top:18px">
+    <h2 class="step-title">عندك CV قديم؟</h2>
+    <p class="step-hint">اختياري: استخرج بياناته بدل ما تبدأ من الصفر. PDF نصي أو DOCX أو TXT، لحد 10MB. القراءة على جهازك بس، وهنوريك البيانات تراجعها قبل ما نستخدمها. الـ PDF المصوّر محتاج نسخة نصية.</p>
+    <label class="lbl" for="oldCVFile">اختار ملف الـ CV القديم</label>
+    <input class="inp" id="oldCVFile" type="file" accept=".pdf,.docx,.txt" onchange="importOldCV(this.files[0]);this.value=''">
+    <p id="cvImportStatus" role="status" aria-live="polite" class="step-hint"></p>
+    <div id="cvImportReview"></div>
+  </section>
+
   <!-- WIZARD -->
   <section id="wizard" style="display:none">
     <div class="pbar"><i id="pfill" style="width:0%"></i></div>
@@ -226,6 +235,13 @@ button:focus-visible{outline:2px solid var(--brand2);outline-offset:2px}
       <button class="chip" onclick="clearAllData()" style="font-size:12.5px;padding:7px 12px;color:var(--bad)"><i class="fa-solid fa-trash-can"></i> امسح كل بياناتي</button>
       <span style="font-size:11px;color:var(--mut);flex-basis:100%">خصوصيتك أولًا: كل حاجة بتتعمل على جهازك بس — مفيش بيانات بتتبعت لأي سيرفر، وصور الشهادات بتتقرا على جهازك ومش بتتخزن.</span>
     </div>
+    <details id="cvSourcePanel" class="card" style="display:none;margin-top:12px">
+      <summary>نص الـ CV القديم، ارجعله وإنت بتكمّل الخبرات والمشاريع</summary>
+      <p class="step-hint">النص مرجع بس، مش هينضاف للـ CV الجديد لوحده. راجع ترتيب الأعمدة لو الملف كان بتصميم معقد.</p>
+      <label class="lbl" for="cvSourceText">النص المستخرج</label>
+      <textarea id="cvSourceText" class="inp en" rows="10" readonly></textarea>
+      <button class="chip" onclick="clearImportedSource()">امسح النص المستخرج</button>
+    </details>
     <div id="stepBody"></div>
   </section>
 
@@ -383,6 +399,7 @@ const STEPS = [
 ];
 
 function startWizard(){
+  document.getElementById('cvImport').style.display='none';
   document.getElementById('hero').style.display='none';
   document.getElementById('wizard').style.display='block';
   document.getElementById('stepnav').style.display='flex';
@@ -578,7 +595,7 @@ function expCard(e,i){
     <div class="lbl">عملت إيه هناك؟ <small>اختار كل اللي ينطبق — هنحولها لنقاط إنجليزية احترافية</small></div>
     <div class="chips">${F.duties.map((d,di)=>`<button class="chip ${e.duties.includes(di)?'on':''}" onclick="toggleDuty(${i},${di},this)">${d[0]}</button>`).join('')}</div>
     <label class="lbl" for="ex_free_${i}">جملة بكلامك <small>(اختياري — بالإنجليزي، إنجاز مميز مش موجود في الاختيارات فوق)</small></label>
-    <input id="ex_free_${i}" class="inp en" placeholder="e.g. Cut report preparation time by automating weekly dashboards" value="${esc(e.free||'')}" oninput="S.exps[${i}].free=this.value;save()">
+    <input id="ex_free_${i}" maxlength="200" class="inp en" placeholder="e.g. Cut report preparation time by automating weekly dashboards" value="${esc(e.free||'')}" oninput="S.exps[${i}].free=this.value;save()">
     <label class="lbl" for="ex_tools_${i}">الأدوات اللي اشتغلت بيها <small>(بالإنجليزي، افصل بفاصلة — Excel, SQL...)</small></label>
     <input id="ex_tools_${i}" class="inp en" placeholder="Excel, SQL, Power BI" value="${esc(e.tools)}" oninput="S.exps[${i}].tools=this.value;save()">
     <div class="lbl">رقم تفتخر بيه؟ <small>(اختياري — الأرقام بتولع السكور)</small></div>
@@ -621,7 +638,7 @@ function projCard(p,i){
     <div class="lbl">عملت إيه في المشروع؟ <small>اختار كل اللي ينطبق</small></div>
     <div class="chips">${F.duties.map((d,di)=>`<button class="chip ${p.duties.includes(di)?'on':''}" onclick="togglePDuty(${i},${di},this)">${d[0]}</button>`).join('')}</div>
     <label class="lbl" for="pj_free_${i}">جملة بكلامك <small>(اختياري — بالإنجليزي، إنجاز مميز مش موجود في الاختيارات فوق)</small></label>
-    <input id="pj_free_${i}" class="inp en" placeholder="e.g. Won 2nd place in the faculty hackathon among 30 teams" value="${esc(p.free||'')}" oninput="S.projs[${i}].free=this.value;save()">
+    <input id="pj_free_${i}" maxlength="200" class="inp en" placeholder="e.g. Won 2nd place in the faculty hackathon among 30 teams" value="${esc(p.free||'')}" oninput="S.projs[${i}].free=this.value;save()">
     <label class="lbl" for="pj_tools_${i}">الأدوات / التكنولوجيا <small>(بالإنجليزي، افصل بفاصلة)</small></label>
     <input id="pj_tools_${i}" class="inp en" placeholder="React, Firebase" value="${esc(p.tools)}" oninput="S.projs[${i}].tools=this.value;save()">
     <div class="lbl">رقم تفتخر بيه؟ <small>(اختياري — الأرقام بتولع السكور)</small></div>
@@ -758,6 +775,22 @@ function rotateImageURL(url, deg){
     img.onerror=rej; img.src=url;
   });
 }
+async function resizeOCRImage(file){
+  const source=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((resolve,reject)=>{ const im=new Image(); im.onload=()=>resolve(im); im.onerror=()=>reject(new Error('image')); im.src=source; });
+    const scale=Math.min(1,2000/Math.max(img.naturalWidth,img.naturalHeight));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
+    canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if(!blob) throw new Error('image');
+    return blob;
+  }finally{ URL.revokeObjectURL(source); }
+}
 async function runOCR(file){
   if(pendingCert || window._ocrBusy){ toast('خلّص الشهادة الحالية الأول'); return; }
   window._ocrBusy = true;
@@ -769,7 +802,7 @@ async function runOCR(file){
   };
   let url;
   try{
-    url = URL.createObjectURL(file);
+    url = URL.createObjectURL(await resizeOCRImage(file));
     let res = await Tesseract.recognize(url,'eng',{logger});
     let parsed = parseCertText(res.data.text);
     if(!parsed.name && (res.data.confidence||0) < 55){
@@ -938,7 +971,9 @@ function buildCV(){
   if(c.linkedin.trim()) bits.push(`<a href="${esc(urlHref(c.linkedin))}">${esc(c.linkedin)}</a>`);
   if(c.github.trim()) bits.push(`<a href="${esc(urlHref(c.github))}">${esc(c.github)}</a>`);
   const contactBits=bits.join(' | ');
-  const endLbl = Number(e.end)>new Date().getFullYear() ? 'Expected '+e.end : e.end;
+  const currentYear=new Date().getFullYear();
+  const isStudent=['student1','student3','internship'].includes(S.status);
+  const endLbl = Number(e.end)>currentYear || (Number(e.end)===currentYear && isStudent) ? 'Expected '+e.end : e.end;
   let html = `<div id="cvSheet">
     <h1>${esc(c.name)}</h1>
     <div class="cv-contact">${contactBits}</div>
@@ -1171,8 +1206,8 @@ function validateStep(){
   if(id==='edu'){
     ok = showErr('e_fac_e', !S.edu.faculty.trim()) && ok;
     ok = showErr('e_major_e', !S.edu.major.trim()) && ok;
-    const s=parseInt(S.edu.start), e=parseInt(S.edu.end);
-    ok = showErr('e_years', !(s>=1990&&s<=2030&&e>=s&&e<=2035)) && ok;
+    const s=String(S.edu.start).trim(), e=String(S.edu.end).trim();
+    ok = showErr('e_years', !(/^\d{4}$/.test(s) && /^\d{4}$/.test(e) && Number(s)>=1990 && Number(s)<=2030 && Number(e)>=Number(s) && Number(e)<=2035)) && ok;
     if(ok && (!S.edu.uni || (S.edu.uni==='__other'&&!S.edu.uniOther.trim()))){ toast('اختار جامعتك واكتب اسمها لو اخترت جامعة تانية'); return false; }
   }
   if(id==='exp'){
@@ -1184,6 +1219,7 @@ function validateStep(){
   if(id==='proj'){
     for(const x of S.projs){
       if(!x.name.trim()){ toast('اكتب اسم كل مشروع أو امسح الكارت الفاضي'); return false; }
+      if(x.year && !/^\d{4}$/.test(String(x.year).trim())){ toast('سنة المشروع لازم تكون 4 أرقام، أو سيبها فاضية'); return false; }
       if(x.qType && !validQuant(x)){ toast('اكتب رقم موجب صحيح ومناسب للإنجاز، والعدد لازم يكون صحيح للأشخاص والمشاريع'); return false; }
     }
   }
@@ -1191,6 +1227,112 @@ function validateStep(){
   if(id==='certs' && pendingCert){ toast('راجع الشهادة المقروءة واعتمدها أو تجاهلها الأول'); return false; }
   if(!ok){ toast('كمّل الحقول اللي بالأحمر الأول'); }
   return ok;
+}
+
+
+/* Optional local old-CV import. Suggestions are never applied without review. */
+let cvImportCandidate=null;
+const importLibraryPromises={};
+function loadImportLibrary(key,url){
+  if(!importLibraryPromises[key]) importLibraryPromises[key]=new Promise((resolve,reject)=>{
+    const script=document.createElement('script'); script.src=url; script.crossOrigin='anonymous';
+    script.onload=resolve; script.onerror=()=>{delete importLibraryPromises[key];script.remove();reject(new Error('library'));}; document.head.appendChild(script);
+  });
+  return importLibraryPromises[key];
+}
+function parseOldCV(text){
+  text=latn(String(text)).slice(0,100000);
+  const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  const email=(text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)||[])[0]||'';
+  const phone=(text.match(/(?:\+?\d[\d ()-]{6,}\d)/g)||[]).find(x=>x.replace(/\D/g,'').length>=8 && x.replace(/\D/g,'').length<=15)||'';
+  const name=lines.slice(0,5).find(x=>/^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ .’'\-]{2,59}$/.test(x) && !/resume|curriculum|vitae|summary|profile|engineer|developer|analyst|designer/i.test(x))||'';
+  const getLink=host=>(text.match(new RegExp('(?:https?://)?(?:www\\.)?'+host+'/[^\\s|<>]+','i'))||[])[0]?.replace(/[.,;)]+$/,'')||'';
+  const uni=lines.find(x=>/university|college|institute/i.test(x))||'';
+  const eduIndex=lines.findIndex(x=>/^education\b|^academic\b/i.test(x));
+  const eduText=eduIndex>=0?lines.slice(eduIndex+1,eduIndex+7).join('\n'):'';
+  const years=eduText.match(/\b(?:19|20)\d{2}\b/g)||[];
+  const major=(eduText.match(/(?:major|speciali[sz]ation)\s*[:\-]\s*([^\n]+)/i)||[])[1]||'';
+  const skillsIndex=lines.findIndex(x=>/^(?:technical\s+)?skills\s*[:\-]?/i.test(x));
+  let skills='';
+  if(skillsIndex>=0){
+    const selected=[];
+    const sameLine=lines[skillsIndex].replace(/^(?:technical\s+)?skills\s*[:\-]?\s*/i,'');
+    if(sameLine) selected.push(sameLine);
+    for(const line of lines.slice(skillsIndex+1,skillsIndex+5)){
+      if(/^(education|experience|projects|certifications|languages|interests|work\s+experience)\b/i.test(line)) break;
+      selected.push(line);
+    }
+    skills=selected.join(', ').slice(0,1000);
+  }
+  return {text,name,email,phone,linkedin:getLink('linkedin\\.com'),github:getLink('github\\.com'),uni,major,start:years[0]||'',end:years[1]||'',skills};
+}
+async function extractOldCV(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['pdf','docx','txt'].includes(ext)) throw new Error('type');
+  if(file.size>10*1024*1024) throw new Error('size');
+  const bytes=await file.arrayBuffer();
+  if(ext==='txt') return new TextDecoder().decode(bytes);
+  if(ext==='docx'){
+    await loadImportLibrary('mammoth','https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js');
+    return (await mammoth.extractRawText({arrayBuffer:bytes})).value;
+  }
+  if(!window.pdfjsLib) window.pdfjsLib=await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs');
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(bytes),isEvalSupported:false}).promise;
+  try{
+    if(pdf.numPages>20) throw new Error('pages');
+    const pages=[];
+    for(let i=1;i<=pdf.numPages;i++){
+      const page=await pdf.getPage(i), content=await page.getTextContent();
+      let previousY=null, line='', lines=[];
+      for(const item of content.items){
+        if(!item.str) continue;
+        const y=item.transform[5];
+        if(previousY!==null && Math.abs(y-previousY)>4){lines.push(line);line='';}
+        line+=(line?' ':'')+item.str; previousY=y;
+        if(item.hasEOL){lines.push(line);line='';previousY=null;}
+      }
+      if(line) lines.push(line); pages.push(lines.join('\n'));
+    }
+    return pages.join('\n\n');
+  }finally{await pdf.destroy();}
+}
+async function importOldCV(file){
+  if(!file || window._cvImportBusy) return;
+  window._cvImportBusy=true;
+  const status=document.getElementById('cvImportStatus');
+  status.textContent='بنقرا الملف على جهازك...';
+  cvImportCandidate=null; document.getElementById('cvImportReview').innerHTML='';
+  try{
+    const text=await extractOldCV(file);
+    if(text.trim().length<20) throw new Error('empty');
+    cvImportCandidate=parseOldCV(text);
+    const fields=[['name','الاسم'],['email','الإيميل'],['phone','الموبايل'],['linkedin','LinkedIn'],['github','GitHub'],['uni','الجامعة / المعهد'],['major','التخصص'],['start','سنة البداية'],['end','سنة التخرج'],['skills','المهارات (بفواصل)']];
+    document.getElementById('cvImportReview').innerHTML=`<p class="step-hint">دي اقتراحات وممكن تغلط. عدّلها أو فضّي أي حقل مش صح. هنملأ الحقول الفاضية بس، ومش هنغيّر بياناتك الحالية. الخبرات والمشاريع هتلاقي نصهم مرجع جوه الخطوات عشان تضيفهم من غير تخمين.</p>${fields.map(([key,label])=>`<label class="lbl" for="imp_${key}">${label}</label><input class="inp en" id="imp_${key}" value="${esc(cvImportCandidate[key])}">`).join('')}<label class="lbl" for="imp_text">النص الكامل للمراجعة</label><textarea id="imp_text" class="inp en" rows="8" readonly>${esc(text.slice(0,100000))}</textarea><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-primary" onclick="applyOldCVImport()">راجعت البيانات، استخدمها وابدأ</button><button class="btn btn-ghost" onclick="discardOldCVImport()">تجاهل</button></div>`;
+    status.textContent='خلصنا القراءة. راجع البيانات قبل ما تستخدمها.';
+  }catch(e){
+    const messages={size:'الملف أكبر من 10MB. اختار نسخة أصغر.',type:'اختار PDF أو DOCX أو TXT.',pages:'اختار CV لحد 20 صفحة.',empty:'مفيش نص مقروء. لو PDF مصوّر، حوّله لنص الأول أو ادخل البيانات يدوي.'};
+    status.textContent=messages[e.message]||'معرفناش نقرا الملف. جرّب نسخة PDF نصية مش محمية أو DOCX أو TXT، أو كمّل يدوي.';
+  }finally{window._cvImportBusy=false;}
+}
+function applyOldCVImport(){
+  if(!cvImportCandidate) return;
+  const get=key=>latn(document.getElementById('imp_'+key).value.trim());
+  for(const key of ['name','email','phone','linkedin','github']) if(!S.contact[key].trim()) S.contact[key]=get(key);
+  const uni=get('uni');
+  if(!S.edu.uni && uni){S.edu.uni='__other';S.edu.uniOther=uni;}
+  for(const key of ['major','start','end']) if(!String(S.edu[key]).trim()) S.edu[key]=get(key);
+  if(!S.customSkills.trim()) S.customSkills=get('skills');
+  document.getElementById('cvSourceText').value=cvImportCandidate.text;
+  document.getElementById('cvSourcePanel').style.display='block';
+  discardOldCVImport(); document.getElementById('cvImport').style.display='none';
+  S.step=0; save(); startWizard();
+}
+function discardOldCVImport(){
+  cvImportCandidate=null;document.getElementById('cvImportReview').innerHTML='';document.getElementById('cvImportStatus').textContent='';
+}
+function clearImportedSource(){
+  document.getElementById('cvSourceText').value='';document.getElementById('cvSourcePanel').style.display='none';
 }
 
 /* ============ INIT ============ */
@@ -1265,4 +1407,4 @@ function validateStep(){
 })();
 </script>
 </body>
-</html>
+    </html>
