@@ -197,3 +197,76 @@ function groupMeta(g){
     content:{icon:'fa-pen-nib',title:'قوة المحتوى'},
     format:{icon:'fa-ruler-combined',title:'التنسيق والطول'},
     depth:{icon:'fa-plus',title:'عمق الملف'},
+    jd:{icon:'fa-bullseye',title:'مطابقة وصف الوظيفة'}}[g]||{icon:'fa-circle',title:g};
+}
+
+function renderReport(rep){
+  const r=$('evalResult');
+  const verdict=rep.pct>=85?'ممتاز 🔥 — الـ CV ده جاهز يتقدم':rep.pct>=70?'جامد — ظبط النقط اللي تحت وهيبقى أقوى':rep.pct>=55?'كويس — بس محتاج شغل قبل التقديم':'محتاج شغل — ابدأ بالنقط اللي تحت بالترتيب';
+  const gaugeColor=rep.pct>=70?'var(--brand2)':'var(--gold)';
+  const circ=2*Math.PI*80;
+  const scoreLabel=rep.hasJD?'سكور تقديري مطابق لوصف الوظيفة':'رنج تقديري لجاهزية الـ CV قدام أنظمة ATS';
+  const kwLine=rep.hasJD?`<div style="font-size:13px;margin-top:8px;padding:9px 12px;border-radius:10px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25)">تطابق الكلمات المفتاحية مع الإعلان: <b>${rep.kwPct}%</b></div>`:'';
+  const groups=[];
+  const seen=new Map();
+  for(const ch of rep.checks){ if(!seen.has(ch.group)) seen.set(ch.group,[]); seen.get(ch.group).push(ch); }
+  for(const [g,rows] of seen){ const meta=groupMeta(g); groups.push({meta,rows}); }
+  const sevTxt={bad:'ناقص',warn:'يتحسّن',ok:'تمام'};
+  r.innerHTML=`
+  <div class="card score-wrap">
+    <span class="step-ico"><i class="fa-solid fa-gauge-high"></i></span>
+    <div class="step-title">${scoreLabel}</div>
+    <div class="gauge">
+      <svg width="190" height="190">
+        <circle cx="95" cy="95" r="80" fill="none" stroke="#101c38" stroke-width="14"/>
+        <circle cx="95" cy="95" r="80" fill="none" stroke="${gaugeColor}" stroke-width="14" stroke-linecap="round"
+          stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-rep.pct/100)}" style="transition:stroke-dashoffset 1.2s ease"/>
+      </svg>
+      <div class="num"><div class="rng" style="color:${gaugeColor}">${rep.lo}–${rep.hi}</div><div class="of">من 100 · رنج تقريبي من التطبيق</div></div>
+    </div>
+    <div class="score-verdict">${verdict}</div>
+    ${kwLine}
+    <div style="font-size:12px;color:var(--mut);margin-top:8px;line-height:1.9">عدد الكلمات: ${rep.words} · بنقيس: التواصل · الأقسام · قوة المحتوى · التنسيق${rep.hasJD?' · مطابقة الوظيفة':''}</div>
+    <div style="font-size:11.5px;color:var(--mut);margin-top:10px;line-height:1.8"><i class="fa-solid fa-circle-info"></i> ده تقدير التطبيق بتاعنا، مش سكور ATS رسمي من أي شركة توظيف، ومش ضمان قبول.</div>
+  </div>
+  ${rep.fixes.length?`<div class="card">
+    <div class="step-title" style="font-size:17px"><i class="fa-solid fa-screwdriver-wrench" style="color:var(--gold)"></i> أهم ${rep.fixes.length} حاجات تبدأ بيهم</div>
+    ${rep.fixes.map(f=>`<div class="fix"><i class="fa-solid fa-arrow-up"></i><span>${esc(f)}</span></div>`).join('')}
+    ${rep.missing.length?`<div style="margin-top:8px"><div class="lbl" style="margin-top:0">كلمات في إعلان الوظيفة مش موجودة في الـ CV:</div>${rep.missing.map(w=>`<span class="kw">${esc(w)}</span>`).join('')}</div>`:''}
+  </div>`:''}
+  <div class="card">
+    <div class="step-title" style="font-size:17px"><i class="fa-solid fa-list-check" style="color:var(--brand2)"></i> التقرير بالتفصيل</div>
+    ${groups.map(gr=>`
+      <div class="lbl" style="margin-top:16px"><i class="fa-solid ${gr.meta.icon}" style="color:var(--brand2)"></i> ${gr.meta.title}</div>
+      ${gr.rows.map(ch=>`<div class="fix ${ch.ok?'ok':''}"><i class="fa-solid ${ch.ok?'fa-circle-check':'fa-circle-xmark'}" style="${ch.ok?'':'color:var(--bad)'}"></i><span style="flex:1">${ch.ok?'':'<b>'+sevTxt[ch.sev]+':</b> '}${esc(ch.ok?okText(ch):ch.fix)}</span><span class="sev sev-${ch.sev}">${ch.ok?ch.pts+'/'+ch.pts:(ch.earned!==undefined?Math.round(ch.earned)+'/'+ch.pts:'0/'+ch.pts)}</span></div>`).join('')}
+    `).join('')}
+  </div>
+  <div class="card" style="text-align:center">
+    <div class="step-title" style="font-size:17px">عايز تظبطها من الأول؟</div>
+    <p class="step-hint">البيلدر بتاعنا بيسألك أسئلة بالمصري ويطلعلك CV إنجليزي ATS-safe من غير ما تكتب سطر واحد بنفسك.</p>
+    <a class="cta" href="index.html" style="text-decoration:none">اعمل CV جديد بالبيلدر <i class="fa-solid fa-arrow-left"></i></a>
+  </div>`;
+  r.style.display='block';
+  r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function okText(ch){
+  return ({contact:'موجودة وواضحة',sections:'موجودة بعنوان واضح',content:'شكلها كويس',format:'مناسبة',depth:'موجودة',jd:'تطابق الكلمات المفتاحية قوي'})[ch.group]||'تمام';
+}
+
+function runEvaluation(){
+  const pasted=$('cvPaste').value.trim();
+  const text=pasted||cvText;
+  if(!text||text.trim().length<20){ toast('ارفع ملف الـ CV أو الصق نصّه الأول'); $('uploadCard').scrollIntoView({behavior:'smooth'}); return; }
+  let jd='';
+  if(evalMode==='jd'){
+    jd=($('jdTitle').value+'\n'+$('jdText').value).trim();
+    if(tokenize(jd).length===0){ toast('الصق وصف الوظيفة الأول، أو اختار تقييم عام'); $('jdText').focus(); return; }
+  }
+  const rep=evaluateCV(text,jd);
+  renderReport(rep);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  $('cvFile').addEventListener('change',e=>{ onFileChosen(e.target.files[0]); e.target.value=''; });
+  $('cvPaste').addEventListener('input',()=>{ if($('cvPaste').value.trim()){ cvText=''; $('fileStatus').textContent='هنحلّل النص اللي لصقته.'; $('srcPreview').style.display='none'; } });
+});
